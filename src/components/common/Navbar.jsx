@@ -1,6 +1,7 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaCar, FaUser, FaBars, FaTimes } from 'react-icons/fa';
+import { FaBars, FaTimes } from 'react-icons/fa';
+import { useState } from 'react';
+import Logo from '../../assets/images/logos/logo1.png';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,41 +14,43 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50">
-      <div className="container-custom">
-        <div className="flex justify-between items-center h-16 md:h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <FaCar className="text-primary text-2xl md:text-3xl" />
-            <span className="font-bold text-xl md:text-2xl text-gray-800">
+    <nav className="absolute top-0 left-0 right-0 z-50 bg-transparent">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-20">
+          {/* Logo and Brand Name on Left */}
+          <Link to="/" className="flex items-center space-x-3">
+            <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/90 backdrop-blur-sm shadow-lg flex items-center justify-center overflow-hidden border-2 border-white/50">
+              <img src={Logo} alt="Eliaan Motors" className="w-10 h-10 md:w-12 md:h-12 object-contain p-1" />
+            </div>
+            <span className="font-bold text-xl md:text-2xl text-white">
               Eliaan <span className="text-primary">Motors</span>
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          {/* Desktop Navigation Links - Centered */}
+          <div className="hidden md:flex items-center space-x-8 absolute left-1/2 transform -translate-x-1/2">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.path}
-                className="text-gray-600 hover:text-primary transition-colors duration-200 font-medium"
+                className="text-white hover:text-primary transition-colors duration-200 font-medium text-lg"
               >
                 {link.name}
               </Link>
             ))}
           </div>
 
-          {/* Desktop Auth Buttons */}
+          {/* Desktop Auth Buttons - Right */}
           <div className="hidden md:flex items-center space-x-4">
             <Link
               to="/login"
-              className="px-4 py-2 text-gray-600 hover:text-primary transition-colors"
+              className="px-5 py-2 text-white hover:text-primary transition-colors font-medium"
             >
               Login
             </Link>
             <Link
               to="/signup"
-              className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors shadow-sm"
+              className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors shadow-md"
             >
               Register
             </Link>
@@ -55,7 +58,7 @@ const Navbar = () => {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-gray-600 text-2xl"
+            className="md:hidden text-white text-2xl"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? <FaTimes /> : <FaBars />}
@@ -64,21 +67,21 @@ const Navbar = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t">
+          <div className="md:hidden py-4 bg-black/80 backdrop-blur-md rounded-lg mt-2">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.path}
-                className="block py-2 text-gray-600 hover:text-primary transition-colors"
+                className="block py-2 px-4 text-white hover:text-primary transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {link.name}
               </Link>
             ))}
-            <div className="pt-4 space-y-2">
+            <div className="pt-4 space-y-2 px-4">
               <Link
                 to="/login"
-                className="block w-full text-center px-4 py-2 text-gray-600 hover:text-primary transition-colors border rounded-lg"
+                className="block w-full text-center px-4 py-2 text-white hover:text-primary transition-colors border border-white rounded-lg"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Login
