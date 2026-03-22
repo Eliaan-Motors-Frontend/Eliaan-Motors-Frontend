@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import { useState, useEffect } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import ThemeToggle from './ThemeToggle';
+import ThemeToggle from './ThemeTog.jsx';
 import Logo from '../../assets/images/logos/logo1.png';
 
 const Navbar = () => {
