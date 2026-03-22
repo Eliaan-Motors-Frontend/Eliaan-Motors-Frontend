@@ -20,7 +20,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 import axios from 'axios';
-import ListingsBackground from '../assets/images/homepage/Home9.jpg';
+import ListingsBackground from '../assets/images/Homepage/Home9.jpg';
 
 // Import brand logos
 import BmwLogo from '../assets/images/logos/bmw.avif';

@@ -3,7 +3,7 @@ import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaClock, FaFacebook, FaTwitter, Fa
 import { useTheme } from '../contexts/ThemeContext';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
-import ContactBackground from '../assets/images/homepage/Home3.avif';
+import ContactBackground from '../assets/images/Homepage/Home3.avif';
 
 const Contact = () => {
   const { isDark } = useTheme();

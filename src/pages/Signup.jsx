@@ -4,7 +4,7 @@ import { FaApple, FaGoogle, FaEye, FaEyeSlash, FaUser, FaEnvelope, FaPhone, FaLo
 import { useTheme } from '../contexts/ThemeContext';
 import Navbar from '../components/common/Navbar';
 import { useAuth } from '../contexts/AuthContext';
-import SignupBackground from '../assets/images/homepage/Home12.png';
+import SignupBackground from '../assets/images/Homepage/Home12.png';
 
 const Signup = () => {
   const navigate = useNavigate();

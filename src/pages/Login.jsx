@@ -4,7 +4,7 @@ import { FaApple, FaGoogle, FaEye, FaEyeSlash, FaCar } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 import Navbar from '../components/common/Navbar';
 import { useAuth } from '../contexts/AuthContext';
-import LoginBackground from '../assets/images/homepage/Home10.jpg';
+import LoginBackground from '../assets/images/Homepage/home10.jpg'; // Changed to match your file name
 
 const Login = () => {
   const navigate = useNavigate();
@@ -90,13 +90,12 @@ const Login = () => {
       {/* Content */}
       <div className="relative z-10 min-h-screen flex items-center justify-center py-20 md:py-24">
         <div className="container-custom mx-auto">
-          {/* Changed from max-w-md to max-w-lg for larger container */}
           <div className="max-w-lg mx-auto w-full">
-            {/* Form Container - Larger padding and wider */}
-            <div className={`rounded-2xl shadow-2xl p-10 md:p-12 transition-all duration-500 ${
+            {/* Form Container - Removed backdrop-blur to prevent zoom effect */}
+            <div className={`rounded-2xl shadow-2xl p-10 md:p-12 ${
               isDark 
-                ? 'bg-gray-900/95 backdrop-blur-sm border border-gray-800' 
-                : 'bg-white/95 backdrop-blur-sm border border-gray-200'
+                ? 'bg-gray-900 border border-gray-800' 
+                : 'bg-white border border-gray-200'
             }`}>
               <div className="flex justify-center mb-8">
                 <div className={`w-20 h-20 rounded-full flex items-center justify-center ${
