@@ -1,7 +1,7 @@
 import { FaMapMarkerAlt, FaArrowRight } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
-import HomeBackground from '../../assets/images/Homepage/Home2.png';
+import HomeBackground from '../../assets/images/homepage/Home2.png';
 
 const HeroSection = () => {
   const { isDark } = useTheme();
