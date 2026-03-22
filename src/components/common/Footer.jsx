@@ -2,24 +2,23 @@ import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaCar } from 'react-ico
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
+  // Footer always stays dark theme
   return (
-    <footer className="bg-gray-900 text-white mt-auto">
+    <footer className="bg-black border-t border-gray-800">
       <div className="container-custom py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Company Info */}
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <FaCar className="text-primary text-2xl" />
-              <span className="font-bold text-xl">Eliaan Motors</span>
+              <span className="font-bold text-xl text-white">Eliaan Motors</span>
             </div>
-            <p className="text-gray-400 text-sm">
-              Your trusted partner for car rentals in Ghana. Quality cars, affordable prices, excellent service.
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Your trusted partner for premium car rentals in Ghana. Quality cars, affordable prices, excellent service.
             </p>
           </div>
 
-          {/* Quick Links */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Quick Links</h3>
+            <h3 className="font-semibold text-white text-lg mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li><Link to="/about" className="text-gray-400 hover:text-primary transition-colors">About Us</Link></li>
               <li><Link to="/listings" className="text-gray-400 hover:text-primary transition-colors">Listings</Link></li>
@@ -28,9 +27,8 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Support */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Support</h3>
+            <h3 className="font-semibold text-white text-lg mb-4">Support</h3>
             <ul className="space-y-2">
               <li><Link to="/faq" className="text-gray-400 hover:text-primary transition-colors">FAQ</Link></li>
               <li><Link to="/terms" className="text-gray-400 hover:text-primary transition-colors">Terms & Conditions</Link></li>
@@ -39,9 +37,8 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Contact Us</h3>
+            <h3 className="font-semibold text-white text-lg mb-4">Contact Us</h3>
             <ul className="space-y-2 text-gray-400">
               <li>Ashaley Botwe, Accra</li>
               <li>+233 24 123 4567</li>
@@ -56,7 +53,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
+        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500 text-sm">
           <p>&copy; {new Date().getFullYear()} Eliaan Motors. All rights reserved.</p>
         </div>
       </div>
