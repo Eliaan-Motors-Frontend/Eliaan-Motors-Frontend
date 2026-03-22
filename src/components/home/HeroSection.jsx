@@ -19,9 +19,13 @@ const HeroSection = () => {
       
       {/* Content */}
       <div className="relative z-10 container-custom text-center py-32 md:py-40">
-        {/* Animated Title */}
+        {/* Main Heading with Red Text */}
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4 max-w-4xl mx-auto animate-fade-in-up">
-          Find, book and rent a car
+          Find, book and{' '}
+          <span className="text-red-500">
+            rent a car
+          </span>
+          {' '}
           <span className="text-primary"> Easily</span>
         </h1>
         

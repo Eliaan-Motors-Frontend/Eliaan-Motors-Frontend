@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  FaSearch, 
-  FaMapMarkerAlt, 
-  FaCalendarAlt, 
   FaStar, 
   FaGasPump, 
   FaUsers, 
@@ -16,12 +13,14 @@ import {
   FaChevronDown,
   FaChevronLeft,
   FaChevronRight,
-  FaCar
+  FaCar,
+  FaEye
 } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 import axios from 'axios';
+import ListingsBackground from '../assets/images/homepage/Home9.jpg';
 
 // Import brand logos
 import BmwLogo from '../assets/images/logos/bmw.avif';
@@ -49,7 +48,7 @@ const carBrands = [
   { name: 'Nissan', logo: NissanLogo, color: '#C0C0C0', bgColor: 'bg-gray-700/40', borderColor: 'border-gray-500/50' }
 ];
 
-// Mock cars data
+// Mock cars data with GHS currency
 const MOCK_CARS = [
   {
     id: 1,
@@ -66,7 +65,7 @@ const MOCK_CARS = [
     fuelType: 'Petrol',
     year: 2023,
     featured: true,
-    description: 'Luxury sedan with premium features'
+    description: 'Luxury sedan with premium features, perfect for business trips and comfortable travel.'
   },
   {
     id: 2,
@@ -83,7 +82,7 @@ const MOCK_CARS = [
     fuelType: 'Diesel',
     year: 2023,
     featured: true,
-    description: 'Luxury SUV with spacious interior'
+    description: 'Luxury SUV with spacious interior, advanced safety features, and powerful performance.'
   },
   {
     id: 3,
@@ -100,7 +99,7 @@ const MOCK_CARS = [
     fuelType: 'Petrol',
     year: 2022,
     featured: false,
-    description: 'Executive sedan with advanced tech'
+    description: 'Executive sedan with advanced technology and premium comfort.'
   },
   {
     id: 4,
@@ -117,7 +116,7 @@ const MOCK_CARS = [
     fuelType: 'Petrol',
     year: 2022,
     featured: false,
-    description: 'Reliable and fuel-efficient sedan'
+    description: 'Reliable and fuel-efficient sedan, ideal for city driving and long trips.'
   },
   {
     id: 5,
@@ -134,7 +133,7 @@ const MOCK_CARS = [
     fuelType: 'Petrol',
     year: 2021,
     featured: false,
-    description: 'Compact SUV with great fuel economy'
+    description: 'Compact SUV with great fuel economy, reliability, and comfortable ride.'
   },
   {
     id: 6,
@@ -151,21 +150,13 @@ const MOCK_CARS = [
     fuelType: 'Diesel',
     year: 2023,
     featured: true,
-    description: 'Premium luxury SUV'
+    description: 'Premium luxury SUV with off-road capabilities and top-tier comfort.'
   }
 ];
 
 const Listings = () => {
   const location = useLocation();
   const { isDark } = useTheme();
-  const [searchParams, setSearchParams] = useState({
-    location: '',
-    pickupDate: '',
-    returnDate: '',
-    carBrand: '',
-    pickupTime: '09:00',
-    returnTime: '17:00'
-  });
   const [filters, setFilters] = useState({
     priceRange: [0, 500],
     selectedBrands: [],
@@ -182,14 +173,12 @@ const Listings = () => {
 
   useEffect(() => {
     fetchCars();
-  }, [filters, searchParams]);
+  }, [filters]);
 
   const fetchCars = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (searchParams.location) params.append('location', searchParams.location);
-      if (searchParams.carBrand) params.append('brand', searchParams.carBrand);
       if (filters.selectedBrands.length > 0) params.append('brands', filters.selectedBrands.join(','));
       if (filters.transmission.length > 0) params.append('transmission', filters.transmission.join(','));
       if (filters.seats.length > 0) params.append('seats', filters.seats.join(','));
@@ -213,18 +202,6 @@ const Listings = () => {
 
   const applyFiltersToMockData = () => {
     let filtered = [...MOCK_CARS];
-    
-    if (searchParams.location) {
-      filtered = filtered.filter(car => 
-        car.location.toLowerCase().includes(searchParams.location.toLowerCase())
-      );
-    }
-    
-    if (searchParams.carBrand) {
-      filtered = filtered.filter(car => 
-        car.brand.toLowerCase().includes(searchParams.carBrand.toLowerCase())
-      );
-    }
     
     if (filters.selectedBrands.length > 0) {
       filtered = filtered.filter(car => 
@@ -265,11 +242,6 @@ const Listings = () => {
     setCars(filtered);
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    fetchCars();
-  };
-
   const toggleBrandFilter = (brand) => {
     setFilters(prev => ({
       ...prev,
@@ -295,90 +267,61 @@ const Listings = () => {
   const fuelOptions = ['Petrol', 'Diesel', 'Electric', 'Hybrid'];
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gradient-to-b from-dark to-dark-300' : 'bg-gradient-to-b from-gray-50 to-white'}`}>
+    <div className={`min-h-screen ${isDark ? 'bg-black' : 'bg-gray-50'}`}>
       <Navbar />
       
-      {/* Hero Section with Search */}
-      <div className={`relative ${isDark ? 'bg-gradient-to-r from-dark via-dark-200 to-dark' : 'bg-gradient-to-r from-gray-100 via-gray-50 to-white'} py-16 border-b ${isDark ? 'border-primary/20' : 'border-gray-200'}`}>
-        <div className={`absolute inset-0 bg-[url('https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=1600')] bg-cover bg-center ${isDark ? 'opacity-5' : 'opacity-10'}`}></div>
-        <div className="container-custom relative z-10">
-          <h1 className={`text-4xl md:text-5xl font-bold mb-3 ${isDark ? 'text-white' : 'text-gray-900'} bg-gradient-to-r from-white to-primary bg-clip-text text-transparent`}>
-            Find Your Perfect Car
-          </h1>
-          <p className={`${isDark ? 'text-gray-300' : 'text-gray-600'} text-lg mb-8`}>
-            We offer the best experience with our premium car rental service
-          </p>
-          
-          {/* Search Form */}
-          <form onSubmit={handleSearch} className={`${isDark ? 'bg-dark-100/90' : 'bg-white'} rounded-2xl shadow-2xl p-6 border ${isDark ? 'border-primary/20' : 'border-gray-200'}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="relative">
-                <FaMapMarkerAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary text-lg" />
-                <input
-                  type="text"
-                  placeholder="Location"
-                  value={searchParams.location}
-                  onChange={(e) => setSearchParams({...searchParams, location: e.target.value})}
-                  className={`w-full pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${isDark ? 'bg-dark-200 border-dark-600 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'}`}
-                />
-              </div>
-              
-              <div className="relative">
-                <FaCar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary text-lg" />
-                <input
-                  type="text"
-                  placeholder="Car brand"
-                  value={searchParams.carBrand}
-                  onChange={(e) => setSearchParams({...searchParams, carBrand: e.target.value})}
-                  className={`w-full pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${isDark ? 'bg-dark-200 border-dark-600 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'}`}
-                />
-              </div>
-              
-              <div className="relative">
-                <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary text-lg" />
-                <input
-                  type="date"
-                  placeholder="Pickup date"
-                  value={searchParams.pickupDate}
-                  onChange={(e) => setSearchParams({...searchParams, pickupDate: e.target.value})}
-                  className={`w-full pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${isDark ? 'bg-dark-200 border-dark-600 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'}`}
-                />
-              </div>
-              
-              <div className="relative">
-                <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary text-lg" />
-                <input
-                  type="date"
-                  placeholder="Return date"
-                  value={searchParams.returnDate}
-                  onChange={(e) => setSearchParams({...searchParams, returnDate: e.target.value})}
-                  className={`w-full pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${isDark ? 'bg-dark-200 border-dark-600 text-white placeholder-gray-500' : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'}`}
-                />
-              </div>
-              
-              <button
-                type="submit"
-                className="bg-gradient-to-r from-primary to-primary-dark text-white font-bold py-3 rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 flex items-center justify-center gap-2 transform hover:scale-105"
-              >
-                <FaSearch />
-                Search Cars
+      {/* Hero Section with Background Image - Improved UI */}
+      <section 
+        className="relative bg-cover bg-center bg-no-repeat py-24 md:py-32"
+        style={{ 
+          backgroundImage: `url(${ListingsBackground})`,
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        {/* Enhanced Dark Overlay */}
+        <div className={`absolute inset-0 transition-all duration-500 ${isDark ? 'bg-gradient-to-b from-black/90 to-black/80' : 'bg-gradient-to-b from-black/80 to-black/70'}`}></div>
+        
+        <div className="relative z-10 container-custom">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-block px-4 py-2 bg-black/50 backdrop-blur-sm rounded-full mb-6">
+              <span className="text-white font-semibold text-sm">Premium Vehicle Rentals</span>
+            </div>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-fade-in-up">
+              <span className="text-white">Browse Our</span>{' '}
+              <span className="text-primary">Premium Fleet</span>
+            </h1>
+            <p className="text-gray-200 text-lg md:text-xl mb-8 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
+              Choose from a wide selection of luxury, economy, and SUV vehicles
+            </p>
+            {/* Search Bar - Added for better UX */}
+            <div className="max-w-2xl mx-auto bg-black/50 backdrop-blur-md rounded-2xl p-2 flex items-center gap-2 animate-fade-in-up animation-delay-300">
+              <input 
+                type="text" 
+                placeholder="Search by car name, brand, or location..." 
+                className="flex-1 bg-transparent px-4 py-3 text-white placeholder-gray-300 focus:outline-none"
+              />
+              <button className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all font-semibold">
+                Search
               </button>
             </div>
-          </form>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Main Content */}
-      <div className="container-custom py-10">
+      <div className="container-custom py-12">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters Sidebar */}
+          {/* Filters Sidebar - Improved UI */}
           <div className={`lg:w-80 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-            <div className={`${isDark ? 'bg-dark-100/80' : 'bg-white'} rounded-2xl shadow-2xl p-6 sticky top-24 border ${isDark ? 'border-primary/20' : 'border-gray-200'}`}>
+            <div className={`${isDark ? 'bg-gray-900/95 backdrop-blur-sm' : 'bg-white'} rounded-2xl shadow-2xl p-6 sticky top-24 border ${isDark ? 'border-gray-800' : 'border-gray-200'} transition-all duration-300`}>
               <div className="flex justify-between items-center mb-6">
-                <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Filters</h3>
+                <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center gap-2`}>
+                  <FaFilter className="text-primary" />
+                  Filters
+                </h3>
                 <button 
                   onClick={() => setShowFilters(false)}
-                  className="lg:hidden text-gray-400 hover:text-gray-600"
+                  className="lg:hidden text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   <FaTimes />
                 </button>
@@ -397,11 +340,11 @@ const Listings = () => {
                       onClick={() => toggleBrandFilter(brand.name)}
                       className={`flex items-center space-x-3 p-2 rounded-xl transition-all duration-200 ${
                         filters.selectedBrands.includes(brand.name)
-                          ? `${brand.bgColor} border ${brand.borderColor} shadow-lg`
-                          : `${isDark ? 'bg-dark-200 border-dark-600 hover:border-primary/50' : 'bg-gray-50 border-gray-200 hover:border-primary/50'} border`
+                          ? `${brand.bgColor} border ${brand.borderColor} shadow-lg transform scale-105`
+                          : `${isDark ? 'bg-gray-800 border-gray-700 hover:border-primary/50' : 'bg-gray-50 border-gray-200 hover:border-primary/50'} border`
                       }`}
                     >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center overflow-hidden ${isDark ? 'bg-dark-300' : 'bg-gray-100'}`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center overflow-hidden ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}>
                         <img src={brand.logo} alt={brand.name} className="w-8 h-8 object-contain" />
                       </div>
                       <span className={`text-sm font-medium ${filters.selectedBrands.includes(brand.name) ? 'text-primary' : (isDark ? 'text-gray-300' : 'text-gray-700')}`}>
@@ -412,9 +355,9 @@ const Listings = () => {
                 </div>
               </div>
               
-              {/* Price Range */}
+              {/* Price Range - Changed to GHS */}
               <div className="mb-8">
-                <h4 className={`font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Price Range</h4>
+                <h4 className={`font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Price Range (GHS)</h4>
                 <div className="space-y-3">
                   <input
                     type="range"
@@ -425,9 +368,9 @@ const Listings = () => {
                     className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-primary"
                   />
                   <div className="flex justify-between text-sm">
-                    <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>$0</span>
-                    <span className="text-primary font-semibold">${filters.priceRange[1]}</span>
-                    <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>$500+</span>
+                    <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>₵0</span>
+                    <span className="text-primary font-semibold">₵{filters.priceRange[1]}</span>
+                    <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>₵500+</span>
                   </div>
                 </div>
               </div>
@@ -449,8 +392,8 @@ const Listings = () => {
                       }}
                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                         filters.transmission.includes(option)
-                          ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                          : `${isDark ? 'bg-dark-200 text-gray-300 border-dark-600 hover:border-primary' : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-primary'} border`
+                          ? 'bg-black text-white shadow-lg'
+                          : `${isDark ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-200'} border`
                       }`}
                     >
                       {option}
@@ -476,8 +419,8 @@ const Listings = () => {
                       }}
                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                         filters.seats.includes(option)
-                          ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                          : `${isDark ? 'bg-dark-200 text-gray-300 border-dark-600 hover:border-primary' : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-primary'} border`
+                          ? 'bg-black text-white shadow-lg'
+                          : `${isDark ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-200'} border`
                       }`}
                     >
                       {option} Seats
@@ -503,8 +446,8 @@ const Listings = () => {
                       }}
                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                         filters.fuelType.includes(option)
-                          ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                          : `${isDark ? 'bg-dark-200 text-gray-300 border-dark-600 hover:border-primary' : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-primary'} border`
+                          ? 'bg-black text-white shadow-lg'
+                          : `${isDark ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-200'} border`
                       }`}
                     >
                       {option}
@@ -523,16 +466,8 @@ const Listings = () => {
                     fuelType: [],
                     sortBy: 'price_low'
                   });
-                  setSearchParams({
-                    location: '',
-                    pickupDate: '',
-                    returnDate: '',
-                    carBrand: '',
-                    pickupTime: '09:00',
-                    returnTime: '17:00'
-                  });
                 }}
-                className={`w-full px-4 py-3 rounded-xl transition-all font-medium ${isDark ? 'bg-dark-200 border-dark-600 text-gray-300 hover:bg-dark-300' : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'} border`}
+                className={`w-full px-4 py-3 rounded-xl transition-all font-medium bg-black text-white hover:bg-gray-800 border border-gray-700`}
               >
                 Clear All Filters
               </button>
@@ -541,12 +476,12 @@ const Listings = () => {
           
           {/* Cars Grid */}
           <div className="flex-1">
-            {/* Toolbar */}
-            <div className={`${isDark ? 'bg-dark-100/80' : 'bg-white'} rounded-2xl shadow-xl p-4 mb-8 flex flex-wrap justify-between items-center gap-4 border ${isDark ? 'border-primary/20' : 'border-gray-200'}`}>
+            {/* Toolbar - Improved UI */}
+            <div className={`${isDark ? 'bg-gray-900/95 backdrop-blur-sm' : 'bg-white'} rounded-2xl shadow-xl p-4 mb-8 flex flex-wrap justify-between items-center gap-4 border ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
               <div className="flex items-center space-x-4">
                 <button 
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`lg:hidden flex items-center space-x-2 px-4 py-2 rounded-xl transition-all ${isDark ? 'bg-dark-200 border-dark-600 hover:bg-dark-300' : 'bg-gray-100 border-gray-200 hover:bg-gray-200'} border`}
+                  className={`lg:hidden flex items-center space-x-2 px-4 py-2 rounded-xl transition-all ${isDark ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-gray-100 border-gray-200 hover:bg-gray-200'} border`}
                 >
                   <FaFilter className="text-primary" />
                   <span className={isDark ? 'text-white' : 'text-gray-700'}>Filters</span>
@@ -556,7 +491,7 @@ const Listings = () => {
                   <select 
                     value={filters.sortBy}
                     onChange={(e) => setFilters({...filters, sortBy: e.target.value})}
-                    className={`rounded-xl px-4 py-2 focus:outline-none focus:border-primary cursor-pointer ${isDark ? 'bg-dark-200 border-dark-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                    className={`rounded-xl px-4 py-2 focus:outline-none focus:border-primary cursor-pointer transition-all ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                   >
                     <option value="price_low">Price: Low to High</option>
                     <option value="price_high">Price: High to Low</option>
@@ -564,7 +499,10 @@ const Listings = () => {
                   </select>
                 </div>
               </div>
-              <p className="text-primary font-medium">{cars.length} cars found</p>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full bg-primary animate-pulse`}></div>
+                <p className="text-primary font-semibold">{cars.length} cars found</p>
+              </div>
             </div>
             
             {/* Loading State */}
@@ -575,7 +513,7 @@ const Listings = () => {
             ) : paginatedCars.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {paginatedCars.map((car) => (
-                  <div key={car.id} className={`group ${isDark ? 'bg-dark-100/80' : 'bg-white'} rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border ${isDark ? 'border-primary/20 hover:border-primary/50' : 'border-gray-200 hover:border-primary/30'}`}>
+                  <div key={car.id} className={`group ${isDark ? 'bg-gray-900' : 'bg-white'} rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border ${isDark ? 'border-gray-800 hover:border-primary/50' : 'border-gray-200 hover:border-primary/30'} transform hover:-translate-y-1`}>
                     {/* Image Container */}
                     <div className="relative overflow-hidden h-56">
                       <img 
@@ -585,7 +523,7 @@ const Listings = () => {
                       />
                       <button 
                         onClick={() => toggleFavorite(car.id)}
-                        className={`absolute top-4 right-4 ${isDark ? 'bg-dark-100/80' : 'bg-white/80'} backdrop-blur-sm p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all`}
+                        className={`absolute top-4 right-4 ${isDark ? 'bg-gray-900/80' : 'bg-white/80'} backdrop-blur-sm p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110`}
                       >
                         {favorites.includes(car.id) ? (
                           <FaHeart className="text-red-500 text-lg" />
@@ -594,7 +532,7 @@ const Listings = () => {
                         )}
                       </button>
                       {car.featured && (
-                        <span className="absolute top-4 left-4 bg-gradient-to-r from-primary to-primary-dark text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-lg">
+                        <span className="absolute top-4 left-4 bg-black text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-lg">
                           Featured
                         </span>
                       )}
@@ -607,7 +545,7 @@ const Listings = () => {
                           <h3 className={`text-xl font-bold group-hover:text-primary transition-colors ${isDark ? 'text-white' : 'text-gray-900'}`}>{car.name}</h3>
                           <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>{car.brand} • {car.year}</p>
                         </div>
-                        <div className={`flex items-center ${isDark ? 'bg-dark-200' : 'bg-gray-100'} px-2 py-1 rounded-lg`}>
+                        <div className={`flex items-center ${isDark ? 'bg-gray-800' : 'bg-gray-100'} px-2 py-1 rounded-lg`}>
                           <FaStar className="text-yellow-500 text-sm" />
                           <span className={`text-sm font-semibold ml-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{car.rating || 4.8}</span>
                           <span className={`text-xs ml-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>({car.reviews || 0})</span>
@@ -615,20 +553,20 @@ const Listings = () => {
                       </div>
                       
                       <div className="flex items-center text-sm mb-4">
-                        <FaMapMarkerAlt className="text-primary text-xs mr-1" />
+                        <FaCar className="text-primary text-xs mr-1" />
                         <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>{car.location}</span>
                       </div>
                       
                       <div className="flex justify-between items-center mb-4 text-sm">
-                        <div className={`flex items-center gap-2 ${isDark ? 'bg-dark-200' : 'bg-gray-100'} px-3 py-1.5 rounded-lg`}>
+                        <div className={`flex items-center gap-2 ${isDark ? 'bg-gray-800' : 'bg-gray-100'} px-3 py-1.5 rounded-lg`}>
                           <FaCog className="text-primary" />
                           <span className={isDark ? 'text-gray-300' : 'text-gray-600'}>{car.transmission}</span>
                         </div>
-                        <div className={`flex items-center gap-2 ${isDark ? 'bg-dark-200' : 'bg-gray-100'} px-3 py-1.5 rounded-lg`}>
+                        <div className={`flex items-center gap-2 ${isDark ? 'bg-gray-800' : 'bg-gray-100'} px-3 py-1.5 rounded-lg`}>
                           <FaUsers className="text-primary" />
                           <span className={isDark ? 'text-gray-300' : 'text-gray-600'}>{car.seats} Seats</span>
                         </div>
-                        <div className={`flex items-center gap-2 ${isDark ? 'bg-dark-200' : 'bg-gray-100'} px-3 py-1.5 rounded-lg`}>
+                        <div className={`flex items-center gap-2 ${isDark ? 'bg-gray-800' : 'bg-gray-100'} px-3 py-1.5 rounded-lg`}>
                           <FaGasPump className="text-primary" />
                           <span className={isDark ? 'text-gray-300' : 'text-gray-600'}>{car.fuelType}</span>
                         </div>
@@ -636,17 +574,20 @@ const Listings = () => {
                       
                       <div className="flex justify-between items-center pt-4 border-t" style={{ borderColor: isDark ? '#374151' : '#E5E7EB' }}>
                         <div>
-                          <span className="text-2xl font-bold text-primary">${car.pricePerDay}</span>
+                          <span className="text-2xl font-bold text-primary">₵{car.pricePerDay}</span>
                           <span className={isDark ? 'text-gray-500' : 'text-gray-400'}>/day</span>
                           {car.originalPrice > car.pricePerDay && (
-                            <span className={`text-xs line-through ml-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>${car.originalPrice}</span>
+                            <span className={`text-xs line-through ml-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>₵{car.originalPrice}</span>
                           )}
                         </div>
                         <Link 
                           to={`/car/${car.id}`}
-                          className="px-5 py-2.5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 text-sm font-bold transform hover:scale-105"
+                          className="px-5 py-2.5 bg-black text-white rounded-xl hover:bg-gray-800 hover:shadow-lg transition-all duration-300 text-sm font-bold"
                         >
-                          Rent Now
+                          <span className="flex items-center gap-2">
+                            <FaEye size={14} />
+                            View Details
+                          </span>
                         </Link>
                       </div>
                     </div>
@@ -654,10 +595,10 @@ const Listings = () => {
                 ))}
               </div>
             ) : (
-              <div className={`${isDark ? 'bg-dark-100/80' : 'bg-white'} rounded-2xl shadow-xl p-12 text-center border ${isDark ? 'border-primary/20' : 'border-gray-200'}`}>
+              <div className={`${isDark ? 'bg-gray-900' : 'bg-white'} rounded-2xl shadow-xl p-12 text-center border ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
                 <FaCar className={`text-6xl mx-auto mb-4 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
                 <p className={`text-lg ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>No cars found matching your criteria</p>
-                <p className={`text-sm mt-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Try adjusting your filters or search location</p>
+                <p className={`text-sm mt-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Try adjusting your filters</p>
                 <button 
                   onClick={() => {
                     setFilters({
@@ -668,29 +609,21 @@ const Listings = () => {
                       fuelType: [],
                       sortBy: 'price_low'
                     });
-                    setSearchParams({
-                      location: '',
-                      pickupDate: '',
-                      returnDate: '',
-                      carBrand: '',
-                      pickupTime: '09:00',
-                      returnTime: '17:00'
-                    });
                   }}
-                  className="mt-6 px-6 py-3 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all font-bold"
+                  className="mt-6 px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-800 transition-all font-bold"
                 >
                   Clear All Filters
                 </button>
               </div>
             )}
             
-            {/* Pagination */}
+            {/* Pagination - Improved UI */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center space-x-2 mt-10">
+              <div className="flex justify-center items-center space-x-2 mt-12">
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className={`p-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isDark ? 'bg-dark-200 border-dark-600 text-white hover:bg-dark-300' : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'} border`}
+                  className={`p-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isDark ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'} border`}
                 >
                   <FaChevronLeft />
                 </button>
@@ -700,8 +633,8 @@ const Listings = () => {
                     onClick={() => setCurrentPage(i + 1)}
                     className={`px-4 py-2 rounded-xl transition-all font-medium ${
                       currentPage === i + 1
-                        ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg'
-                        : `${isDark ? 'bg-dark-200 border-dark-600 text-white hover:bg-dark-300' : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'} border`
+                        ? 'bg-black text-white shadow-lg'
+                        : `${isDark ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'} border`
                     }`}
                   >
                     {i + 1}
@@ -710,7 +643,7 @@ const Listings = () => {
                 <button
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
-                  className={`p-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isDark ? 'bg-dark-200 border-dark-600 text-white hover:bg-dark-300' : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'} border`}
+                  className={`p-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isDark ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'} border`}
                 >
                   <FaChevronRight />
                 </button>
