@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Eliaan Motors - Redirecting...</title>
+    <script>
+      (function() {
+        // Get the current path
+        var path = window.location.pathname;
+        var repoName = 'Eliaan-Motors-Frontend';
+        
+        // Remove the repo name from the path
+        var newPath = path.replace(new RegExp('^/' + repoName), '');
+        
+        // If there's a path, store it for redirect
+        if (newPath && newPath !== '') {
+          sessionStorage.redirect = newPath;
+        } else {
+          sessionStorage.redirect = '/';
+        }
+        
+        // Redirect to index.html
+        window.location.replace('/' + repoName + '/index.html');
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Redirecting to Eliaan Motors...</p>
+  </body>
+</html>

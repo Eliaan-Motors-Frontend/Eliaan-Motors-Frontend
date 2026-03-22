@@ -1,11 +1,26 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/Eliaan-Motors-Frontend/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/Eliaan-Motors-Frontend/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>eliaan-motors-frontend</title>
-    <script type="module" crossorigin src="/Eliaan-Motors-Frontend/assets/index-D9b7Lf0w.js"></script>
+    <title>Eliaan Motors - Premium Car Rentals</title>
+    <script>
+      // Handle GitHub Pages redirect for React Router
+      (function() {
+        // Check if we have a redirect path stored
+        if (sessionStorage.redirect) {
+          var redirect = sessionStorage.redirect;
+          delete sessionStorage.redirect;
+          
+          // Update the URL without reloading the page
+          if (redirect && redirect !== window.location.pathname) {
+            window.history.replaceState(null, '', redirect);
+          }
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/Eliaan-Motors-Frontend/assets/index-Bgxje5Iy.js"></script>
     <link rel="stylesheet" crossorigin href="/Eliaan-Motors-Frontend/assets/index-nvJpPrOg.css">
   </head>
   <body>
