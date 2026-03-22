@@ -4,7 +4,7 @@ import { FaApple, FaGoogle, FaEye, FaEyeSlash, FaCar } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 import Navbar from '../components/common/Navbar';
 import { useAuth } from '../contexts/AuthContext';
-import LoginBackground from '../assets/images/homepage/Home10.jpg';
+import LoginBackground from '../assets/images/Homepage/Home10.jpg';
 
 const Login = () => {
   const navigate = useNavigate();

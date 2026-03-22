@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
-import AboutBackground from '../assets/images/homepage/home8.jpg';
+import AboutBackground from '../assets/images/Homepage/home8.jpg';
 
 const About = () => {
   const { isDark } = useTheme();
