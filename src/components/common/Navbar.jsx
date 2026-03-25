@@ -1,10 +1,11 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaBars, FaTimes, FaUser, FaStore } from 'react-icons/fa';
 import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FaBars, FaTimes, FaUser, FaStore, FaSignOutAlt, FaShieldAlt } from 'react-icons/fa';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import ThemeToggle from './ThemeToggle';
 import Logo from '../../assets/images/logos/logo1.png';
+import toast from 'react-hot-toast';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,7 +13,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  const { user, isAuthenticated, isVendor, logout } = useAuth();
+  const { user, isAuthenticated, isVendor, isAdmin, logout } = useAuth();
   
   const isHomePage = location.pathname === '/';
 
@@ -60,23 +61,31 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
+    toast.success('Logged out successfully!');
     navigate('/');
   };
 
-  // Get dashboard link based on user role
   const getDashboardLink = () => {
-    if (isVendor) {
-      return '/vendor';
-    }
+    if (isVendor) return '/vendor';
+    if (isAdmin) return '/admin';
     return '/dashboard';
   };
 
-  // Get dashboard icon based on user role
   const getDashboardIcon = () => {
-    if (isVendor) {
-      return <FaStore className="mr-2" />;
-    }
+    if (isVendor) return <FaStore className="mr-2" />;
+    if (isAdmin) return <FaShieldAlt className="mr-2" />;
     return <FaUser className="mr-2" />;
+  };
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    const name = user.fullName || user.businessName || 'User';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -107,29 +116,35 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Desktop Auth Buttons & Theme Toggle */}
+          {/* Desktop Right Section */}
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
             
             {isAuthenticated ? (
-              // Show Dashboard and Logout when logged in
               <>
+                {/* User Avatar with Initials Only - Name removed */}
                 <Link
                   to={getDashboardLink()}
-                  className={`px-5 py-2 ${getTextColor()} hover:text-primary transition-colors font-medium flex items-center`}
+                  className="flex items-center space-x-2 group"
                 >
-                  {getDashboardIcon()}
-                  Dashboard
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 group-hover:scale-110 ${
+                    isDark 
+                      ? 'bg-primary/20 text-primary group-hover:bg-primary/30' 
+                      : 'bg-primary/10 text-primary group-hover:bg-primary/20'
+                  }`}>
+                    <span className="text-sm font-bold">{getUserInitials()}</span>
+                  </div>
                 </Link>
+                
                 <button
                   onClick={handleLogout}
-                  className={`px-5 py-2 ${getTextColor()} hover:text-red-500 transition-colors font-medium`}
+                  className={`px-3 py-2 ${getTextColor()} hover:text-red-500 transition-colors font-medium flex items-center gap-1`}
                 >
-                  Logout
+                  <FaSignOutAlt size={14} />
+                  <span>Logout</span>
                 </button>
               </>
             ) : (
-              // Show Login and Register when logged out
               <>
                 <Link
                   to="/login"
@@ -150,6 +165,15 @@ const Navbar = () => {
           {/* Mobile: Theme Toggle + Hamburger Menu */}
           <div className="md:hidden flex items-center space-x-3">
             <ThemeToggle />
+            {isAuthenticated && (
+              <Link to={getDashboardLink()} className="flex items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  isDark ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-primary'
+                }`}>
+                  <span className="text-sm font-bold">{getUserInitials()}</span>
+                </div>
+              </Link>
+            )}
             <button
               className={`text-2xl ${getTextColor()}`}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -174,11 +198,20 @@ const Navbar = () => {
             ))}
             <div className={`pt-4 space-y-2 px-4 border-t ${getBorderColor()} mt-2`}>
               {isAuthenticated ? (
-                // Mobile: Dashboard and Logout when logged in
                 <>
+                  <div className="flex items-center space-x-3 py-2">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      isDark ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-primary'
+                    }`}>
+                      <span className="text-sm font-bold">{getUserInitials()}</span>
+                    </div>
+                    <span className={isDark ? 'text-white' : 'text-gray-900'}>
+                      {user?.fullName || user?.businessName || 'Account'}
+                    </span>
+                  </div>
                   <Link
                     to={getDashboardLink()}
-                    className={`flex items-center justify-center w-full text-center px-4 py-2 transition-colors rounded-lg ${
+                    className={`flex items-center gap-2 w-full text-center px-4 py-2 transition-colors rounded-lg ${
                       isDark 
                         ? 'text-white hover:text-primary border border-gray-800' 
                         : 'text-gray-900 hover:text-primary border border-gray-200'
@@ -193,17 +226,17 @@ const Navbar = () => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
-                    className={`flex items-center justify-center w-full text-center px-4 py-2 transition-colors rounded-lg ${
+                    className={`flex items-center gap-2 w-full text-center px-4 py-2 transition-colors rounded-lg ${
                       isDark 
                         ? 'text-red-400 hover:text-red-300 border border-gray-800' 
                         : 'text-red-600 hover:text-red-500 border border-gray-200'
                     }`}
                   >
+                    <FaSignOutAlt size={14} />
                     Logout
                   </button>
                 </>
               ) : (
-                // Mobile: Login and Register when logged out
                 <>
                   <Link
                     to="/login"

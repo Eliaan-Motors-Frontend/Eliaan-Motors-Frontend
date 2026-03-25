@@ -14,12 +14,14 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaCar,
-  FaEye
+  FaEye,
+  FaSpinner
 } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
-import axios from 'axios';
+import api from '../services/api';
 import ListingsBackground from '../assets/images/Homepage/Home9.jpg';
 
 // Import brand logos
@@ -48,115 +50,10 @@ const carBrands = [
   { name: 'Nissan', logo: NissanLogo, color: '#C0C0C0', bgColor: 'bg-gray-700/40', borderColor: 'border-gray-500/50' }
 ];
 
-// Mock cars data with GHS currency
-const MOCK_CARS = [
-  {
-    id: 1,
-    name: 'Mercedes Benz C-Class',
-    brand: 'Mercedes',
-    mainImage: 'https://images.unsplash.com/photo-1616422285623-13ff0162193c?w=600',
-    pricePerDay: 250,
-    originalPrice: 300,
-    location: 'Airport Residential, Accra',
-    rating: 4.8,
-    reviews: 124,
-    transmission: 'Automatic',
-    seats: 5,
-    fuelType: 'Petrol',
-    year: 2023,
-    featured: true,
-    description: 'Luxury sedan with premium features, perfect for business trips and comfortable travel.'
-  },
-  {
-    id: 2,
-    name: 'BMW X5',
-    brand: 'BMW',
-    mainImage: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600',
-    pricePerDay: 350,
-    originalPrice: 400,
-    location: 'Cantonments, Accra',
-    rating: 4.9,
-    reviews: 56,
-    transmission: 'Automatic',
-    seats: 7,
-    fuelType: 'Diesel',
-    year: 2023,
-    featured: true,
-    description: 'Luxury SUV with spacious interior, advanced safety features, and powerful performance.'
-  },
-  {
-    id: 3,
-    name: 'Audi A4',
-    brand: 'Audi',
-    mainImage: 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=600',
-    pricePerDay: 280,
-    originalPrice: 320,
-    location: 'Madina, Accra',
-    rating: 4.7,
-    reviews: 78,
-    transmission: 'Automatic',
-    seats: 5,
-    fuelType: 'Petrol',
-    year: 2022,
-    featured: false,
-    description: 'Executive sedan with advanced technology and premium comfort.'
-  },
-  {
-    id: 4,
-    name: 'Toyota Camry',
-    brand: 'Toyota',
-    mainImage: 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=600',
-    pricePerDay: 150,
-    originalPrice: 180,
-    location: 'East Legon, Accra',
-    rating: 4.6,
-    reviews: 89,
-    transmission: 'Automatic',
-    seats: 5,
-    fuelType: 'Petrol',
-    year: 2022,
-    featured: false,
-    description: 'Reliable and fuel-efficient sedan, ideal for city driving and long trips.'
-  },
-  {
-    id: 5,
-    name: 'Honda CR-V',
-    brand: 'Honda',
-    mainImage: 'https://images.unsplash.com/photo-1568844293986-8d0400bd4745?w=600',
-    pricePerDay: 180,
-    originalPrice: 210,
-    location: 'Tema, Ghana',
-    rating: 4.5,
-    reviews: 67,
-    transmission: 'Automatic',
-    seats: 5,
-    fuelType: 'Petrol',
-    year: 2021,
-    featured: false,
-    description: 'Compact SUV with great fuel economy, reliability, and comfortable ride.'
-  },
-  {
-    id: 6,
-    name: 'Range Rover Sport',
-    brand: 'Land Rover',
-    mainImage: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=600',
-    pricePerDay: 450,
-    originalPrice: 500,
-    location: 'Airport Residential, Accra',
-    rating: 4.9,
-    reviews: 43,
-    transmission: 'Automatic',
-    seats: 5,
-    fuelType: 'Diesel',
-    year: 2023,
-    featured: true,
-    description: 'Premium luxury SUV with off-road capabilities and top-tier comfort.'
-  }
-];
-
 const Listings = () => {
   const location = useLocation();
   const { isDark } = useTheme();
+  const { isAuthenticated, isVendor } = useAuth(); // Add role check
   const [filters, setFilters] = useState({
     priceRange: [0, 500],
     selectedBrands: [],
@@ -168,78 +65,118 @@ const Listings = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [favorites, setFavorites] = useState([]);
-  const [cars, setCars] = useState(MOCK_CARS);
-  const [loading, setLoading] = useState(false);
+  const [cars, setCars] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCars, setTotalCars] = useState(0);
 
   useEffect(() => {
     fetchCars();
-  }, [filters]);
+  }, [filters, currentPage]);
+
+  useEffect(() => {
+    if (isAuthenticated && !isVendor) {
+      fetchFavorites();
+    }
+  }, [isAuthenticated, isVendor]);
 
   const fetchCars = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filters.selectedBrands.length > 0) params.append('brands', filters.selectedBrands.join(','));
-      if (filters.transmission.length > 0) params.append('transmission', filters.transmission.join(','));
-      if (filters.seats.length > 0) params.append('seats', filters.seats.join(','));
-      if (filters.fuelType.length > 0) params.append('fuelType', filters.fuelType.join(','));
-      if (filters.priceRange[1] < 500) params.append('maxPrice', filters.priceRange[1]);
-      params.append('sort', filters.sortBy);
       
-      const response = await axios.get(`http://localhost:5000/api/cars?${params.toString()}`);
-      if (response.data && response.data.length > 0) {
-        setCars(response.data);
-      } else {
-        applyFiltersToMockData();
+      if (filters.priceRange[1] < 500) {
+        params.append('maxPrice', filters.priceRange[1]);
       }
+      if (filters.transmission.length > 0) {
+        params.append('transmission', filters.transmission.join(','));
+      }
+      if (filters.seats.length > 0) {
+        params.append('seats', filters.seats.join(','));
+      }
+      if (filters.fuelType.length > 0) {
+        params.append('fuelType', filters.fuelType.join(','));
+      }
+      
+      let sortParam = '';
+      switch(filters.sortBy) {
+        case 'price_low':
+          sortParam = 'price_asc';
+          break;
+        case 'price_high':
+          sortParam = 'price_desc';
+          break;
+        case 'rating':
+          sortParam = 'rating';
+          break;
+        default:
+          sortParam = 'newest';
+      }
+      params.append('sort', sortParam);
+      params.append('page', currentPage);
+      params.append('limit', 9);
+      
+      const response = await api.get(`/cars?${params.toString()}`);
+      
+      let carsData = [];
+      if (response.data.cars) {
+        carsData = response.data.cars;
+        setTotalPages(response.data.pages || 1);
+        setTotalCars(response.data.total || 0);
+      } else if (Array.isArray(response.data)) {
+        carsData = response.data;
+        setTotalPages(Math.ceil(carsData.length / 9));
+        setTotalCars(carsData.length);
+      }
+      
+      let filteredCars = carsData;
+      if (filters.selectedBrands.length > 0) {
+        filteredCars = carsData.filter(car => 
+          filters.selectedBrands.includes(car.brand)
+        );
+      }
+      
+      setCars(filteredCars);
     } catch (error) {
-      console.error('Error fetching cars, using mock data:', error.message);
-      applyFiltersToMockData();
+      console.error('Error fetching cars:', error);
+      setCars([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const applyFiltersToMockData = () => {
-    let filtered = [...MOCK_CARS];
-    
-    if (filters.selectedBrands.length > 0) {
-      filtered = filtered.filter(car => 
-        filters.selectedBrands.includes(car.brand)
-      );
+  const fetchFavorites = async () => {
+    try {
+      const response = await api.get('/favorites');
+      const favoriteIds = response.data.map(fav => fav.carId?._id || fav.carId);
+      setFavorites(favoriteIds);
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
+    }
+  };
+
+  const toggleFavorite = async (carId) => {
+    if (!isAuthenticated) {
+      window.location.href = '/login';
+      return;
     }
     
-    filtered = filtered.filter(car => 
-      car.pricePerDay >= filters.priceRange[0] && car.pricePerDay <= filters.priceRange[1]
-    );
-    
-    if (filters.transmission.length > 0) {
-      filtered = filtered.filter(car => filters.transmission.includes(car.transmission));
+    if (isVendor) {
+      alert('Vendors cannot save favorites. Create a user account to save favorites.');
+      return;
     }
     
-    if (filters.seats.length > 0) {
-      filtered = filtered.filter(car => filters.seats.includes(car.seats.toString()));
+    try {
+      if (favorites.includes(carId)) {
+        await api.delete(`/favorites/${carId}`);
+        setFavorites(favorites.filter(id => id !== carId));
+      } else {
+        await api.post('/favorites', { carId });
+        setFavorites([...favorites, carId]);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
-    
-    if (filters.fuelType.length > 0) {
-      filtered = filtered.filter(car => filters.fuelType.includes(car.fuelType));
-    }
-    
-    switch(filters.sortBy) {
-      case 'price_low':
-        filtered.sort((a, b) => a.pricePerDay - b.pricePerDay);
-        break;
-      case 'price_high':
-        filtered.sort((a, b) => b.pricePerDay - a.pricePerDay);
-        break;
-      case 'rating':
-        filtered.sort((a, b) => b.rating - a.rating);
-        break;
-      default:
-        break;
-    }
-    
-    setCars(filtered);
   };
 
   const toggleBrandFilter = (brand) => {
@@ -249,28 +186,22 @@ const Listings = () => {
         ? prev.selectedBrands.filter(b => b !== brand)
         : [...prev.selectedBrands, brand]
     }));
+    setCurrentPage(1);
   };
-
-  const toggleFavorite = (carId) => {
-    setFavorites(prev => 
-      prev.includes(carId) 
-        ? prev.filter(id => id !== carId)
-        : [...prev, carId]
-    );
-  };
-
-  const totalPages = Math.ceil(cars.length / 9);
-  const paginatedCars = cars.slice((currentPage - 1) * 9, currentPage * 9);
 
   const transmissionOptions = ['Automatic', 'Manual'];
   const seatOptions = ['2', '4', '5', '7'];
   const fuelOptions = ['Petrol', 'Diesel', 'Electric', 'Hybrid'];
 
+  const itemsPerPage = 9;
+  const paginatedCars = cars.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPagesFiltered = Math.ceil(cars.length / itemsPerPage);
+
   return (
     <div className={`min-h-screen ${isDark ? 'bg-black' : 'bg-gray-50'}`}>
       <Navbar />
       
-      {/* Hero Section with Background Image - Improved UI */}
+      {/* Hero Section */}
       <section 
         className="relative bg-cover bg-center bg-no-repeat py-24 md:py-32"
         style={{ 
@@ -278,7 +209,6 @@ const Listings = () => {
           backgroundAttachment: 'fixed'
         }}
       >
-        {/* Enhanced Dark Overlay */}
         <div className={`absolute inset-0 transition-all duration-500 ${isDark ? 'bg-gradient-to-b from-black/90 to-black/80' : 'bg-gradient-to-b from-black/80 to-black/70'}`}></div>
         
         <div className="relative z-10 container-custom">
@@ -293,17 +223,6 @@ const Listings = () => {
             <p className="text-gray-200 text-lg md:text-xl mb-8 max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
               Choose from a wide selection of luxury, economy, and SUV vehicles
             </p>
-            {/* Search Bar - Added for better UX */}
-            <div className="max-w-2xl mx-auto bg-black/50 backdrop-blur-md rounded-2xl p-2 flex items-center gap-2 animate-fade-in-up animation-delay-300">
-              <input 
-                type="text" 
-                placeholder="Search by car name, brand, or location..." 
-                className="flex-1 bg-transparent px-4 py-3 text-white placeholder-gray-300 focus:outline-none"
-              />
-              <button className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all font-semibold">
-                Search
-              </button>
-            </div>
           </div>
         </div>
       </section>
@@ -311,9 +230,9 @@ const Listings = () => {
       {/* Main Content */}
       <div className="container-custom py-12">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters Sidebar - Improved UI */}
+          {/* Filters Sidebar */}
           <div className={`lg:w-80 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-            <div className={`${isDark ? 'bg-gray-900/95 backdrop-blur-sm' : 'bg-white'} rounded-2xl shadow-2xl p-6 sticky top-24 border ${isDark ? 'border-gray-800' : 'border-gray-200'} transition-all duration-300`}>
+            <div className={`${isDark ? 'bg-gray-900/95 backdrop-blur-sm' : 'bg-white'} rounded-2xl shadow-2xl p-6 sticky top-24 border ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'} flex items-center gap-2`}>
                   <FaFilter className="text-primary" />
@@ -321,7 +240,7 @@ const Listings = () => {
                 </h3>
                 <button 
                   onClick={() => setShowFilters(false)}
-                  className="lg:hidden text-gray-400 hover:text-gray-600 transition-colors"
+                  className="lg:hidden text-gray-400 hover:text-gray-600"
                 >
                   <FaTimes />
                 </button>
@@ -355,7 +274,7 @@ const Listings = () => {
                 </div>
               </div>
               
-              {/* Price Range - Changed to GHS */}
+              {/* Price Range */}
               <div className="mb-8">
                 <h4 className={`font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>Price Range (GHS)</h4>
                 <div className="space-y-3">
@@ -389,6 +308,7 @@ const Listings = () => {
                             ? prev.transmission.filter(t => t !== option)
                             : [...prev.transmission, option]
                         }));
+                        setCurrentPage(1);
                       }}
                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                         filters.transmission.includes(option)
@@ -416,6 +336,7 @@ const Listings = () => {
                             ? prev.seats.filter(s => s !== option)
                             : [...prev.seats, option]
                         }));
+                        setCurrentPage(1);
                       }}
                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                         filters.seats.includes(option)
@@ -443,6 +364,7 @@ const Listings = () => {
                             ? prev.fuelType.filter(f => f !== option)
                             : [...prev.fuelType, option]
                         }));
+                        setCurrentPage(1);
                       }}
                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                         filters.fuelType.includes(option)
@@ -466,8 +388,9 @@ const Listings = () => {
                     fuelType: [],
                     sortBy: 'price_low'
                   });
+                  setCurrentPage(1);
                 }}
-                className={`w-full px-4 py-3 rounded-xl transition-all font-medium bg-black text-white hover:bg-gray-800 border border-gray-700`}
+                className="w-full px-4 py-3 rounded-xl transition-all font-medium bg-black text-white hover:bg-gray-800 border border-gray-700"
               >
                 Clear All Filters
               </button>
@@ -476,7 +399,7 @@ const Listings = () => {
           
           {/* Cars Grid */}
           <div className="flex-1">
-            {/* Toolbar - Improved UI */}
+            {/* Toolbar */}
             <div className={`${isDark ? 'bg-gray-900/95 backdrop-blur-sm' : 'bg-white'} rounded-2xl shadow-xl p-4 mb-8 flex flex-wrap justify-between items-center gap-4 border ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
               <div className="flex items-center space-x-4">
                 <button 
@@ -490,8 +413,11 @@ const Listings = () => {
                   <FaSort className="text-primary" />
                   <select 
                     value={filters.sortBy}
-                    onChange={(e) => setFilters({...filters, sortBy: e.target.value})}
-                    className={`rounded-xl px-4 py-2 focus:outline-none focus:border-primary cursor-pointer transition-all ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
+                    onChange={(e) => {
+                      setFilters({...filters, sortBy: e.target.value});
+                      setCurrentPage(1);
+                    }}
+                    className={`rounded-xl px-4 py-2 focus:outline-none focus:border-primary cursor-pointer ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-900'}`}
                   >
                     <option value="price_low">Price: Low to High</option>
                     <option value="price_high">Price: High to Low</option>
@@ -508,12 +434,12 @@ const Listings = () => {
             {/* Loading State */}
             {loading ? (
               <div className="flex justify-center items-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <FaSpinner className="animate-spin text-4xl text-primary" />
               </div>
             ) : paginatedCars.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {paginatedCars.map((car) => (
-                  <div key={car.id} className={`group ${isDark ? 'bg-gray-900' : 'bg-white'} rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border ${isDark ? 'border-gray-800 hover:border-primary/50' : 'border-gray-200 hover:border-primary/30'} transform hover:-translate-y-1`}>
+                  <div key={car._id || car.id} className={`group ${isDark ? 'bg-gray-900' : 'bg-white'} rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border ${isDark ? 'border-gray-800 hover:border-primary/50' : 'border-gray-200 hover:border-primary/30'} transform hover:-translate-y-1`}>
                     {/* Image Container */}
                     <div className="relative overflow-hidden h-56">
                       <img 
@@ -521,16 +447,18 @@ const Listings = () => {
                         alt={car.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
-                      <button 
-                        onClick={() => toggleFavorite(car.id)}
-                        className={`absolute top-4 right-4 ${isDark ? 'bg-gray-900/80' : 'bg-white/80'} backdrop-blur-sm p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110`}
-                      >
-                        {favorites.includes(car.id) ? (
-                          <FaHeart className="text-red-500 text-lg" />
-                        ) : (
-                          <FaRegHeart className={isDark ? 'text-white' : 'text-gray-700'} />
-                        )}
-                      </button>
+                      {!isVendor && (
+                        <button 
+                          onClick={() => toggleFavorite(car._id || car.id)}
+                          className={`absolute top-4 right-4 ${isDark ? 'bg-gray-900/80' : 'bg-white/80'} backdrop-blur-sm p-2.5 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110`}
+                        >
+                          {favorites.includes(car._id || car.id) ? (
+                            <FaHeart className="text-red-500 text-lg" />
+                          ) : (
+                            <FaRegHeart className={isDark ? 'text-white' : 'text-gray-700'} />
+                          )}
+                        </button>
+                      )}
                       {car.featured && (
                         <span className="absolute top-4 left-4 bg-black text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-lg">
                           Featured
@@ -547,7 +475,7 @@ const Listings = () => {
                         </div>
                         <div className={`flex items-center ${isDark ? 'bg-gray-800' : 'bg-gray-100'} px-2 py-1 rounded-lg`}>
                           <FaStar className="text-yellow-500 text-sm" />
-                          <span className={`text-sm font-semibold ml-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{car.rating || 4.8}</span>
+                          <span className={`text-sm font-semibold ml-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{car.rating || 0}</span>
                           <span className={`text-xs ml-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>({car.reviews || 0})</span>
                         </div>
                       </div>
@@ -581,13 +509,11 @@ const Listings = () => {
                           )}
                         </div>
                         <Link 
-                          to={`/car/${car.id}`}
-                          className="px-5 py-2.5 bg-black text-white rounded-xl hover:bg-gray-800 hover:shadow-lg transition-all duration-300 text-sm font-bold"
+                          to={`/car/${car._id || car.id}`}
+                          className="px-5 py-2.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-all duration-300 text-sm font-bold flex items-center gap-2"
                         >
-                          <span className="flex items-center gap-2">
-                            <FaEye size={14} />
-                            View Details
-                          </span>
+                          <FaEye size={14} />
+                          View Details
                         </Link>
                       </div>
                     </div>
@@ -609,6 +535,7 @@ const Listings = () => {
                       fuelType: [],
                       sortBy: 'price_low'
                     });
+                    setCurrentPage(1);
                   }}
                   className="mt-6 px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-800 transition-all font-bold"
                 >
@@ -617,8 +544,8 @@ const Listings = () => {
               </div>
             )}
             
-            {/* Pagination - Improved UI */}
-            {totalPages > 1 && (
+            {/* Pagination */}
+            {totalPagesFiltered > 1 && (
               <div className="flex justify-center items-center space-x-2 mt-12">
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
@@ -627,7 +554,7 @@ const Listings = () => {
                 >
                   <FaChevronLeft />
                 </button>
-                {[...Array(totalPages)].map((_, i) => (
+                {[...Array(totalPagesFiltered)].map((_, i) => (
                   <button
                     key={i}
                     onClick={() => setCurrentPage(i + 1)}
@@ -641,8 +568,8 @@ const Listings = () => {
                   </button>
                 ))}
                 <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(Math.min(totalPagesFiltered, currentPage + 1))}
+                  disabled={currentPage === totalPagesFiltered}
                   className={`p-2 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed ${isDark ? 'bg-gray-800 border-gray-700 text-white hover:bg-gray-700' : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'} border`}
                 >
                   <FaChevronRight />

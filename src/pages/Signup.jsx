@@ -1,20 +1,23 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaApple, FaGoogle, FaEye, FaEyeSlash, FaUser, FaEnvelope, FaPhone, FaLock, FaStore, FaUserCircle, FaCamera, FaCar } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
 import Navbar from '../components/common/Navbar';
 import { useAuth } from '../contexts/AuthContext';
-import SignupBackground from '../assets/images/Homepage/Home12.png';
+import SignupBackground from '../assets/images/Homepage/home12.png';
 
 const Signup = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { register } = useAuth();
   const { isDark } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState('user');
   const [profileImage, setProfileImage] = useState(null);
   const [profileImagePreview, setProfileImagePreview] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const fileInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
@@ -36,6 +39,7 @@ const Signup = () => {
       ...formData,
       [name]: type === 'checkbox' ? checked : value
     });
+    setError('');
   };
 
   const handleRoleChange = (selectedRole) => {
@@ -46,13 +50,13 @@ const Signup = () => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert('File size must be less than 2MB');
+        toast.error('File size must be less than 2MB');
         return;
       }
       
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        alert('Only JPG, PNG, GIF, and WEBP files are allowed');
+        toast.error('Only JPG, PNG, GIF, and WEBP files are allowed');
         return;
       }
       
@@ -62,6 +66,7 @@ const Signup = () => {
         setProfileImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
+      toast.success('Profile image selected!');
     }
   };
 
@@ -71,79 +76,96 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
     
+    // Validation
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match!");
+      const errorMsg = "Passwords don't match!";
+      setError(errorMsg);
+      toast.error(errorMsg);
+      setLoading(false);
       return;
     }
     
     if (formData.password.length < 6) {
-      alert("Password must be at least 6 characters long!");
+      const errorMsg = "Password must be at least 6 characters long!";
+      setError(errorMsg);
+      toast.error(errorMsg);
+      setLoading(false);
       return;
     }
     
     if (!formData.agreeToTerms) {
-      alert("Please agree to the Terms and Conditions");
+      const errorMsg = "Please agree to the Terms and Conditions";
+      setError(errorMsg);
+      toast.error(errorMsg);
+      setLoading(false);
       return;
     }
 
     if (role === 'vendor') {
       if (!formData.businessName) {
-        alert("Please enter your business name");
+        const errorMsg = "Please enter your business name";
+        setError(errorMsg);
+        toast.error(errorMsg);
+        setLoading(false);
         return;
       }
       if (!formData.businessAddress) {
-        alert("Please enter your business address");
+        const errorMsg = "Please enter your business address";
+        setError(errorMsg);
+        toast.error(errorMsg);
+        setLoading(false);
         return;
       }
     }
     
-    const userData = new FormData();
-    userData.append('fullName', formData.fullName);
-    userData.append('email', formData.email);
-    userData.append('phone', formData.phone);
-    userData.append('password', formData.password);
-    userData.append('role', role);
-    userData.append('agreeToTerms', formData.agreeToTerms);
+    // Prepare data for registration
+    const userData = {
+      fullName: formData.fullName,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password,
+      role: role,
+    };
     
-    if (profileImage) {
-      userData.append('profileImage', profileImage);
-    }
-    
+    // Add vendor fields if needed
     if (role === 'vendor') {
-      userData.append('businessName', formData.businessName);
-      userData.append('businessAddress', formData.businessAddress);
-      userData.append('businessLicense', formData.businessLicense);
-      userData.append('taxId', formData.taxId);
+      userData.businessName = formData.businessName;
+      userData.businessAddress = formData.businessAddress;
+      userData.businessLicense = formData.businessLicense;
+      userData.taxId = formData.taxId;
     }
     
-    console.log('Signup data:', Object.fromEntries(userData));
+    console.log('Submitting registration:', userData);
     
     try {
-      const mockUser = {
-        id: Date.now().toString(),
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        role: role,
-        profileImage: profileImagePreview,
-        ...(role === 'vendor' && {
-          businessName: formData.businessName,
-          businessAddress: formData.businessAddress
-        })
-      };
+      const result = await register(userData);
+      console.log('Registration result:', result);
       
-      const mockToken = 'mock-jwt-token';
-      login(mockUser, mockToken);
-      
-      if (role === 'vendor') {
-        navigate('/vendor');
+      if (result.success) {
+        // Show success toast with welcome message
+        toast.success(`Welcome to Eliaan Motors, ${result.user.fullName}! 🚗`);
+        
+        // Registration successful, redirect based on role
+        if (result.user.role === 'vendor') {
+          navigate('/vendor');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
-        navigate('/dashboard');
+        const errorMsg = result.error || 'Registration failed. Please try again.';
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
-    } catch (error) {
-      console.error('Signup error:', error);
-      alert('Signup failed. Please try again.');
+    } catch (err) {
+      console.error('Registration error:', err);
+      const errorMsg = 'Registration failed. Please check your connection and try again.';
+      setError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -151,26 +173,21 @@ const Signup = () => {
     <div className="min-h-screen relative">
       <Navbar />
       
-      {/* Background Image - Fixed, never changes */}
+      {/* Background Image */}
       <div 
-        className="fixed inset-0 bg-cover bg-center bg-no-repeat z-0"
-        style={{ 
-          backgroundImage: `url(${SignupBackground})`,
-        }}
+        className="fixed inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${SignupBackground})` }}
       ></div>
       
-      {/* Dark Overlay - Fixed, never changes */}
-      <div className="fixed inset-0 z-0 bg-black/70"></div>
+      {/* Dark Overlay */}
+      <div className="fixed inset-0 bg-black/70"></div>
       
       {/* Content */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center py-20 md:py-24">
+      <div className="relative z-10 min-h-screen flex items-center justify-center py-16 md:py-20">
         <div className="container-custom mx-auto">
           <div className="max-w-2xl mx-auto">
-            {/* Form Container - Changes with theme */}
-            <div className={`rounded-2xl shadow-2xl p-6 md:p-8 transition-all duration-500 ${
-              isDark 
-                ? 'bg-gray-900/95 backdrop-blur-sm border border-gray-800' 
-                : 'bg-white/95 backdrop-blur-sm border border-gray-200'
+            <div className={`rounded-2xl shadow-2xl p-6 md:p-8 ${
+              isDark ? 'bg-gray-900 border border-gray-800' : 'bg-white border border-gray-200'
             }`}>
               {/* Logo */}
               <div className="flex justify-center mb-6">
@@ -185,16 +202,19 @@ const Signup = () => {
               <div className="text-center mb-6">
                 <h2 className={`text-3xl md:text-4xl font-bold mb-2 ${
                   isDark ? 'text-white' : 'text-gray-900'
-                }`}>
-                  Create Account
-                </h2>
-                <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
-                  Join Eliaan Motors today
-                </p>
+                }`}>Create Account</h2>
+                <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>Join Eliaan Motors today</p>
               </div>
 
+              {/* Error Message */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-xl text-red-400 text-sm">
+                  {error}
+                </div>
+              )}
+
               {/* Profile Picture Upload */}
-              <div className={`mb-6 pb-4 border-b ${isDark ? 'border-gray-800' : 'border-gray-200'}`}>
+              <div className="mb-6 pb-4 border-b border-gray-800">
                 <label className={`block font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Profile Picture
                 </label>
@@ -231,18 +251,6 @@ const Signup = () => {
                     <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
                       JPG, PNG or GIF. Max size 2MB
                     </p>
-                    {profileImagePreview && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProfileImage(null);
-                          setProfileImagePreview(null);
-                        }}
-                        className="text-xs text-red-400 hover:text-red-300 mt-1"
-                      >
-                        Remove
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
@@ -268,9 +276,7 @@ const Signup = () => {
                     <span className={`font-semibold ${role === 'user' ? 'text-primary' : (isDark ? 'text-white' : 'text-gray-700')}`}>
                       User
                     </span>
-                    <span className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                      Rent cars
-                    </span>
+                    <span className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Rent cars</span>
                   </button>
                   
                   <button
@@ -288,9 +294,7 @@ const Signup = () => {
                     <span className={`font-semibold ${role === 'vendor' ? 'text-primary' : (isDark ? 'text-white' : 'text-gray-700')}`}>
                       Vendor
                     </span>
-                    <span className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                      List cars for rent
-                    </span>
+                    <span className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>List cars for rent</span>
                   </button>
                 </div>
               </div>
@@ -309,7 +313,7 @@ const Signup = () => {
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                         isDark 
                           ? 'bg-gray-800 border border-gray-700 text-white placeholder-gray-500' 
                           : 'bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400'
@@ -331,7 +335,7 @@ const Signup = () => {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                         isDark 
                           ? 'bg-gray-800 border border-gray-700 text-white placeholder-gray-500' 
                           : 'bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400'
@@ -353,7 +357,7 @@ const Signup = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                      className={`w-full pl-10 pr-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                         isDark 
                           ? 'bg-gray-800 border border-gray-700 text-white placeholder-gray-500' 
                           : 'bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400'
@@ -381,7 +385,7 @@ const Signup = () => {
                           name="businessName"
                           value={formData.businessName}
                           onChange={handleChange}
-                          className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                          className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                             isDark 
                               ? 'bg-gray-800 border border-gray-700 text-white placeholder-gray-500' 
                               : 'bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400'
@@ -400,49 +404,13 @@ const Signup = () => {
                           name="businessAddress"
                           value={formData.businessAddress}
                           onChange={handleChange}
-                          className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                          className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                             isDark 
                               ? 'bg-gray-800 border border-gray-700 text-white placeholder-gray-500' 
                               : 'bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400'
                           }`}
                           placeholder="Enter your business address"
                           required
-                        />
-                      </div>
-
-                      <div>
-                        <label className={`block font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                          Business License (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          name="businessLicense"
-                          value={formData.businessLicense}
-                          onChange={handleChange}
-                          className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
-                            isDark 
-                              ? 'bg-gray-800 border border-gray-700 text-white placeholder-gray-500' 
-                              : 'bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400'
-                          }`}
-                          placeholder="Enter your business license number"
-                        />
-                      </div>
-
-                      <div>
-                        <label className={`block font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                          Tax ID (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          name="taxId"
-                          value={formData.taxId}
-                          onChange={handleChange}
-                          className={`w-full px-4 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
-                            isDark 
-                              ? 'bg-gray-800 border border-gray-700 text-white placeholder-gray-500' 
-                              : 'bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400'
-                          }`}
-                          placeholder="Enter your tax ID"
                         />
                       </div>
                     </div>
@@ -460,7 +428,7 @@ const Signup = () => {
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-12 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                      className={`w-full pl-10 pr-12 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                         isDark 
                           ? 'bg-gray-800 border border-gray-700 text-white placeholder-gray-500' 
                           : 'bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400'
@@ -471,7 +439,7 @@ const Signup = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary transition-colors"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary"
                     >
                       {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
                     </button>
@@ -489,7 +457,7 @@ const Signup = () => {
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-12 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${
+                      className={`w-full pl-10 pr-12 py-3 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                         isDark 
                           ? 'bg-gray-800 border border-gray-700 text-white placeholder-gray-500' 
                           : 'bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-400'
@@ -500,7 +468,7 @@ const Signup = () => {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary transition-colors"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-primary"
                     >
                       {showConfirmPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
                     </button>
@@ -532,13 +500,14 @@ const Signup = () => {
                 {/* Signup Button */}
                 <button
                   type="submit"
+                  disabled={loading}
                   className={`w-full font-bold py-3 rounded-xl transition-all duration-300 ${
                     isDark 
                       ? 'bg-black text-primary border border-gray-700 hover:bg-gray-900 hover:border-primary' 
                       : 'bg-gray-900 text-primary border border-gray-200 hover:bg-gray-800 hover:border-primary'
                   }`}
                 >
-                  Create Account
+                  {loading ? 'Creating Account...' : 'Create Account'}
                 </button>
               </form>
 
@@ -558,37 +527,27 @@ const Signup = () => {
               <div className="space-y-3">
                 <button
                   type="button"
+                  onClick={() => window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/google`}
                   className={`w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                     isDark 
                       ? 'bg-black border border-gray-700 hover:bg-gray-900' 
                       : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
                   }`}
                 >
-                  <FaApple size={20} className={isDark ? 'text-white' : 'text-gray-800'} />
-                  <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                    Continue with Apple ID
-                  </span>
-                </button>
-                
-                <button
-                  type="button"
-                  className={`w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                    isDark 
-                      ? 'bg-black border border-gray-700 hover:bg-gray-900' 
-                      : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
-                  }`}
-                >
-                  <FaGoogle size={20} className="text-red-500" />
-                  <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                    Continue with Google
-                  </span>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20">
+                    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                    <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+                  </svg>
+                  <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-800'}`}>Continue with Google</span>
                 </button>
               </div>
 
               {/* Login Link */}
               <p className={`text-center mt-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 Already have an account?{' '}
-                <Link to="/login" className="text-primary hover:text-primary-dark font-semibold transition-colors">
+                <Link to="/login" className="text-primary hover:text-primary-dark font-semibold">
                   Sign In
                 </Link>
               </p>
@@ -600,4 +559,5 @@ const Signup = () => {
   );
 };
 
+// ✅ IMPORTANT: Make sure this default export is present
 export default Signup;

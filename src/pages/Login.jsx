@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaApple, FaGoogle, FaEye, FaEyeSlash, FaCar } from 'react-icons/fa';
+import { FaGoogle, FaEye, FaEyeSlash, FaCar } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
-import Navbar from '../components/common/Navbar';
 import { useAuth } from '../contexts/AuthContext';
+import Navbar from '../components/common/Navbar';
 import LoginBackground from '../assets/images/Homepage/Home10.jpg';
 
 const Login = () => {
@@ -33,43 +34,27 @@ const Login = () => {
     setLoading(true);
     setError('');
     
-    try {
-      console.log('Login data:', formData);
-      
-      let mockUser;
-      if (formData.email.includes('vendor')) {
-        mockUser = {
-          id: Date.now().toString(),
-          fullName: 'Vendor Name',
-          email: formData.email,
-          role: 'vendor',
-          businessName: 'Eliaan Motors',
-          businessAddress: 'Ashaley Botwe, Accra'
-        };
-      } else {
-        mockUser = {
-          id: Date.now().toString(),
-          fullName: formData.email.split('@')[0] || 'John Doe',
-          email: formData.email,
-          role: 'user',
-          phone: '+233 24 123 4567'
-        };
-      }
-      
-      const mockToken = 'mock-jwt-token';
-      login(mockUser, mockToken);
-      
-      if (mockUser.role === 'vendor') {
+    const result = await login(formData.email, formData.password);
+    
+    if (result.success) {
+      toast.success(`Welcome back, ${result.user.fullName || result.user.businessName || 'User'}! 🎉`);
+      if (result.user.role === 'vendor') {
         navigate('/vendor');
       } else {
         navigate('/dashboard');
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      setError('Invalid email or password. Please try again.');
-    } finally {
-      setLoading(false);
+    } else {
+      const errorMessage = result.error || 'Login failed';
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
+    
+    setLoading(false);
+  };
+
+  const handleGoogleLogin = () => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    window.location.href = `${apiUrl}/auth/google`;
   };
 
   return (
@@ -143,9 +128,6 @@ const Login = () => {
                     placeholder="Enter your email or phone number"
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Hint: Use email with "vendor" to login as vendor
-                  </p>
                 </div>
 
                 <div>
@@ -226,27 +208,19 @@ const Login = () => {
               <div className="space-y-4">
                 <button
                   type="button"
+                  onClick={handleGoogleLogin}
                   className={`w-full flex items-center justify-center gap-3 px-4 py-4 rounded-xl transition-colors ${
                     isDark 
                       ? 'bg-black border border-gray-700 hover:bg-gray-900' 
                       : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
                   }`}
                 >
-                  <FaApple size={22} className={isDark ? 'text-white' : 'text-gray-800'} />
-                  <span className={`font-medium text-base ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                    Continue with Apple ID
-                  </span>
-                </button>
-                
-                <button
-                  type="button"
-                  className={`w-full flex items-center justify-center gap-3 px-4 py-4 rounded-xl transition-colors ${
-                    isDark 
-                      ? 'bg-black border border-gray-700 hover:bg-gray-900' 
-                      : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
-                  }`}
-                >
-                  <FaGoogle size={22} className="text-red-500" />
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22">
+                    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                    <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+                  </svg>
                   <span className={`font-medium text-base ${isDark ? 'text-white' : 'text-gray-800'}`}>
                     Continue with Google
                   </span>

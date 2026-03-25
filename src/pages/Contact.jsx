@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaClock, FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaPaperPlane } from 'react-icons/fa';
+import { FaPhone, FaEnvelope, FaMapMarkerAlt, FaClock, FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaPaperPlane, FaSpinner } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 import ContactBackground from '../assets/images/Homepage/Home3.avif';
+import api from '../services/api';
 
 const Contact = () => {
   const { isDark } = useTheme();
@@ -14,20 +15,33 @@ const Contact = () => {
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Contact form submitted:', formData);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 5000);
-    setFormData({ name: '', email: '', subject: '', message: '' });
+    setLoading(true);
+    setError('');
+    
+    try {
+      await api.post('/contact', formData);
+      setSubmitted(true);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+      setTimeout(() => setSubmitted(false), 5000);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setError(error.response?.data?.message || 'Failed to send message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const contactInfo = [
@@ -182,7 +196,13 @@ const Contact = () => {
             
             {submitted && (
               <div className="mb-4 p-3 bg-green-500/20 border border-green-500 rounded-xl text-green-400 text-sm">
-                Thank you! Your message has been sent successfully.
+                ✅ Thank you! Your message has been sent successfully. We'll get back to you soon.
+              </div>
+            )}
+            
+            {error && (
+              <div className="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-xl text-red-400 text-sm">
+                ❌ {error}
               </div>
             )}
             
@@ -265,14 +285,24 @@ const Contact = () => {
               
               <button
                 type="submit"
-                className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all hover:scale-105 ${
+                disabled={loading}
+                className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
                   isDark 
                     ? 'bg-black text-primary border border-gray-700 hover:bg-gray-900 hover:border-primary' 
                     : 'bg-gray-900 text-primary border border-gray-200 hover:bg-gray-800 hover:border-primary'
                 }`}
               >
-                <span>Send Message</span>
-                <FaPaperPlane size={14} />
+                {loading ? (
+                  <>
+                    <FaSpinner className="animate-spin" />
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Send Message</span>
+                    <FaPaperPlane size={14} />
+                  </>
+                )}
               </button>
             </form>
           </div>
