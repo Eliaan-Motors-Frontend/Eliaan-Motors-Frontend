@@ -80,7 +80,18 @@ const Navbar = () => {
   // Get user initials for avatar
   const getUserInitials = () => {
     if (!user) return 'U';
-    const name = user.fullName || user.businessName || 'User';
+    
+    // For vendors, use business name
+    if (user.businessName) {
+      const parts = user.businessName.split(' ');
+      if (parts.length >= 2) {
+        return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+      }
+      return user.businessName.substring(0, 2).toUpperCase();
+    }
+    
+    // For regular users
+    const name = user.fullName || 'User';
     const parts = name.split(' ');
     if (parts.length >= 2) {
       return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
@@ -116,13 +127,13 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Desktop Right Section */}
+          {/* Desktop Auth Buttons & Theme Toggle */}
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
             
             {isAuthenticated ? (
               <>
-                {/* User Avatar with Initials Only - Name removed */}
+                {/* User Avatar with Initials */}
                 <Link
                   to={getDashboardLink()}
                   className="flex items-center space-x-2 group"
@@ -138,23 +149,37 @@ const Navbar = () => {
                 
                 <button
                   onClick={handleLogout}
-                  className={`px-3 py-2 ${getTextColor()} hover:text-red-500 transition-colors font-medium flex items-center gap-1`}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                    isDark 
+                      ? 'text-gray-300 hover:text-red-400 hover:bg-red-500/10' 
+                      : 'text-gray-700 hover:text-red-600 hover:bg-red-50'
+                  }`}
                 >
-                  <FaSignOutAlt size={14} />
-                  <span>Logout</span>
+                  Logout
                 </button>
               </>
             ) : (
               <>
+                {/* Login Button - Clean with hover effect */}
                 <Link
                   to="/login"
-                  className={`px-5 py-2 ${getTextColor()} hover:text-primary transition-colors font-medium`}
+                  className={`px-5 py-2 rounded-lg font-medium transition-all duration-200 ${
+                    isDark 
+                      ? 'text-gray-200 hover:text-primary hover:bg-white/5' 
+                      : 'text-gray-700 hover:text-primary hover:bg-gray-100'
+                  }`}
                 >
                   Login
                 </Link>
+                
+                {/* Register Button - Solid/Outlined box */}
                 <Link
                   to="/signup"
-                  className={`px-6 py-2 ${isDark ? 'bg-black' : 'bg-white'} text-primary border ${getBorderColor()} rounded-lg hover:border-primary transition-all duration-300 font-semibold`}
+                  className={`px-6 py-2 rounded-lg font-semibold transition-all duration-200 border-2 ${
+                    isDark 
+                      ? 'border-primary text-primary hover:bg-primary hover:text-black' 
+                      : 'border-primary text-primary hover:bg-primary hover:text-white'
+                  }`}
                 >
                   Register
                 </Link>
@@ -199,19 +224,16 @@ const Navbar = () => {
             <div className={`pt-4 space-y-2 px-4 border-t ${getBorderColor()} mt-2`}>
               {isAuthenticated ? (
                 <>
-                  <div className="flex items-center space-x-3 py-2">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  <div className="flex justify-center py-2">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                       isDark ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-primary'
                     }`}>
-                      <span className="text-sm font-bold">{getUserInitials()}</span>
+                      <span className="text-base font-bold">{getUserInitials()}</span>
                     </div>
-                    <span className={isDark ? 'text-white' : 'text-gray-900'}>
-                      {user?.fullName || user?.businessName || 'Account'}
-                    </span>
                   </div>
                   <Link
                     to={getDashboardLink()}
-                    className={`flex items-center gap-2 w-full text-center px-4 py-2 transition-colors rounded-lg ${
+                    className={`flex items-center gap-2 justify-center w-full px-4 py-2 transition-colors rounded-lg ${
                       isDark 
                         ? 'text-white hover:text-primary border border-gray-800' 
                         : 'text-gray-900 hover:text-primary border border-gray-200'
@@ -226,7 +248,7 @@ const Navbar = () => {
                       handleLogout();
                       setIsMenuOpen(false);
                     }}
-                    className={`flex items-center gap-2 w-full text-center px-4 py-2 transition-colors rounded-lg ${
+                    className={`flex items-center gap-2 justify-center w-full px-4 py-2 transition-colors rounded-lg ${
                       isDark 
                         ? 'text-red-400 hover:text-red-300 border border-gray-800' 
                         : 'text-red-600 hover:text-red-500 border border-gray-200'
@@ -238,18 +260,27 @@ const Navbar = () => {
                 </>
               ) : (
                 <>
+                  {/* Mobile Login Button */}
                   <Link
                     to="/login"
-                    className={`block w-full text-center px-4 py-2 transition-colors border rounded-lg ${
-                      isDark ? 'text-white hover:text-primary border-gray-800' : 'text-gray-900 hover:text-primary border-gray-200'
+                    className={`block w-full text-center px-4 py-2 transition-colors rounded-lg ${
+                      isDark 
+                        ? 'text-white hover:text-primary border border-gray-800' 
+                        : 'text-gray-900 hover:text-primary border border-gray-200'
                     }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Login
                   </Link>
+                  
+                  {/* Mobile Register Button - Solid box */}
                   <Link
                     to="/signup"
-                    className="block w-full text-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-semibold"
+                    className={`block w-full text-center px-4 py-2 rounded-lg font-semibold transition-all border-2 ${
+                      isDark 
+                        ? 'border-primary text-primary hover:bg-primary hover:text-black' 
+                        : 'border-primary text-primary hover:bg-primary hover:text-white'
+                    }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Register
