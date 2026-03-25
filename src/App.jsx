@@ -20,7 +20,7 @@ function App() {
   return (
     <div className={isDark ? 'dark' : 'light'}>
       <Routes>
-        {/* Public Routes */}
+        {/* Public Routes - Always accessible */}
         <Route path="/" element={<PageTransition><Homepage /></PageTransition>} />
         <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
         <Route path="/signup" element={<PageTransition><Signup /></PageTransition>} />
@@ -29,12 +29,38 @@ function App() {
         <Route path="/about" element={<PageTransition><About /></PageTransition>} />
         <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
         
-        {/* User Protected Routes */}
-        <Route path="/dashboard" element={<PageTransition><PrivateRoute><UserDashboard /></PrivateRoute></PageTransition>} />
+        {/* Protected Routes - Only accessible when logged in */}
+        <Route
+          path="/dashboard"
+          element={
+            <PageTransition>
+              <PrivateRoute>
+                <UserDashboard />
+              </PrivateRoute>
+            </PageTransition>
+          }
+        />
         
-        {/* Vendor Protected Routes */}
-        <Route path="/vendor" element={<PageTransition><VendorRoute><VendorDashboard /></VendorRoute></PageTransition>} />
-        <Route path="/vendor/*" element={<PageTransition><VendorRoute><VendorDashboard /></VendorRoute></PageTransition>} />
+        <Route
+          path="/vendor"
+          element={
+            <PageTransition>
+              <VendorRoute>
+                <VendorDashboard />
+              </VendorRoute>
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/vendor/*"
+          element={
+            <PageTransition>
+              <VendorRoute>
+                <VendorDashboard />
+              </VendorRoute>
+            </PageTransition>
+          }
+        />
       </Routes>
     </div>
   )
