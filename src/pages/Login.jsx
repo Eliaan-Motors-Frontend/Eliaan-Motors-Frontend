@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/common/Navbar';
-import LoginBackground from '../assets/images/Homepage/Home10.jpg';
+import LoginBackground from '../assets/images/Homepage/home10.jpg';
 
 const Login = () => {
   const navigate = useNavigate();

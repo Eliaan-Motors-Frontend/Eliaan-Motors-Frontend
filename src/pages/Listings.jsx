@@ -22,7 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 import api from '../services/api';
-import ListingsBackground from '../assets/images/Homepage/Home9.jpg';
+import ListingsBackground from '../assets/images/Homepage/home9.jpg';
 
 // Import brand logos
 import BmwLogo from '../assets/images/logos/bmw.avif';
