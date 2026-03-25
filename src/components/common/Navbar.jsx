@@ -16,6 +16,7 @@ const Navbar = () => {
   const { user, isAuthenticated, isVendor, isAdmin, logout } = useAuth();
   
   const isHomePage = location.pathname === '/';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -88,6 +89,9 @@ const Navbar = () => {
     return name.substring(0, 2).toUpperCase();
   };
 
+  // Don't show login/register buttons on auth pages
+  const showAuthButtons = !isAuthenticated && !isAuthPage;
+
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${getNavbarBg()}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -144,7 +148,7 @@ const Navbar = () => {
                   <span>Logout</span>
                 </button>
               </>
-            ) : (
+            ) : showAuthButtons ? (
               <>
                 {/* Login Button - Themed like Register button but with red */}
                 <Link
@@ -170,7 +174,7 @@ const Navbar = () => {
                   Register
                 </Link>
               </>
-            )}
+            ) : null}
           </div>
 
           {/* Mobile: Theme Toggle + Hamburger Menu */}
@@ -247,7 +251,7 @@ const Navbar = () => {
                     Logout
                   </button>
                 </>
-              ) : (
+              ) : !isAuthPage ? (
                 <>
                   <Link
                     to="/login"
@@ -272,7 +276,7 @@ const Navbar = () => {
                     Register
                   </Link>
                 </>
-              )}
+              ) : null}
             </div>
           </div>
         )}
